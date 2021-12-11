@@ -29,7 +29,7 @@ type AutoCurdModel struct {
 	Model string
 }
 
-func init() {
+func initMain() {
 	var err error
 	err = os.RemoveAll(path + "/api")
 	err = os.Mkdir("api", os.ModePerm)
@@ -183,6 +183,7 @@ func main() {
 			if len(name) == 0 && len(file) == 0 {
 				fmt.Println("参数错误！")
 			} else {
+				initMain()
 				FindModelsList(name, file)
 				CopyModels(file)
 				CopyConfig()
