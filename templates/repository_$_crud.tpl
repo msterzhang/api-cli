@@ -4,7 +4,7 @@ import (
 	"errors"
 	"{{.App}}/api/models"
 	"{{.App}}/api/utils/channels"
-	"github.com/jinzhu/gorm"
+    "gorm.io/gorm"
 	"strconv"
 )
 
@@ -40,14 +40,14 @@ func (r *Repository{{.Model}}sCRUD) Save({{.Name}} models.{{.Model}}) (models.{{
 // FindAll returns all the {{.Name}}s from the DB
 func (r *Repository{{.Model}}sCRUD) FindAll(page int,size int) ([]models.{{.Model}}, int, error) {
 	var err error
-	var num int
+	var num int64
 	{{.Name}}s := []models.{{.Model}}{}
 	done := make(chan bool)
 	go func(ch chan<- bool) {
 		defer close(ch)
 		result := r.db.Debug().Model(&models.{{.Model}}{}).Find(&{{.Name}}s)
 		result.Count(&num)
-        err = result.Limit(strconv.Itoa(size)).Offset(strconv.Itoa((page - 1) * size)).Order("-ID").Scan(&{{.Name}}s).Error
+        err = result.Limit(size).Offset((page - 1) * size).Order("-ID").Scan(&{{.Name}}s).Error
 		if err != nil {
 			ch <- false
 			return
@@ -55,12 +55,12 @@ func (r *Repository{{.Model}}sCRUD) FindAll(page int,size int) ([]models.{{.Mode
 		ch <- true
 	}(done)
 	if channels.OK(done) {
-		return {{.Name}}s, num, nil
+		return {{.Name}}s, int(num), nil
 	}
 	return nil, 0, err
 }
 
-// FindByID returns an {{.Name}} from the DB
+// FindByID return {{.Name}} from the DB
 func (r *Repository{{.Model}}sCRUD) FindByID(id string) (models.{{.Model}}, error) {
 	var err error
 	{{.Name}} := models.{{.Model}}{}
@@ -78,19 +78,19 @@ func (r *Repository{{.Model}}sCRUD) FindByID(id string) (models.{{.Model}}, erro
 		return {{.Name}}, nil
 	}
 
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return models.{{.Model}}{}, errors.New("{{.Model}} Not Found")
 	}
 	return models.{{.Model}}{}, err
 }
 
-// Update updates an {{.Name}} from the DB
+// UpdateByID update {{.Name}} from the DB
 func (r *Repository{{.Model}}sCRUD) UpdateByID(id string, {{.Name}} models.{{.Model}}) (int64, error) {
 	var rs *gorm.DB
 	done := make(chan bool)
 	go func(ch chan<- bool) {
 		defer close(ch)
-		rs = r.db.Debug().Model(&models.{{.Model}}{}).Where("id = ?", id).Update(&{{.Name}})
+		rs = r.db.Debug().Model(&models.{{.Model}}{}).Where("id = ?", id).Updates(&{{.Name}})
 		ch <- true
 	}(done)
 
@@ -104,13 +104,13 @@ func (r *Repository{{.Model}}sCRUD) UpdateByID(id string, {{.Name}} models.{{.Mo
 	return 0, rs.Error
 }
 
-// Delete removes an {{.Name}} from the DB
+// DeleteByID {{.Name}} by the id
 func (r *Repository{{.Model}}sCRUD) DeleteByID(id string) (int64, error) {
 	var rs *gorm.DB
 	done := make(chan bool)
 	go func(ch chan<- bool) {
 		defer close(ch)
-		rs = r.db.Debug().Model(&models.{{.Model}}{}).Where("id = ?", id).Take(&models.{{.Model}}{}).Delete(&models.{{.Model}}{})
+		rs = r.db.Debug().Model(&models.{{.Model}}{}).Where("id = ?", id).Delete(&models.{{.Model}}{})
 		ch <- true
 	}(done)
 
@@ -118,23 +118,22 @@ func (r *Repository{{.Model}}sCRUD) DeleteByID(id string) (int64, error) {
 		if rs.Error != nil {
 			return 0, rs.Error
 		}
-
 		return rs.RowsAffected, nil
 	}
 	return 0, rs.Error
 }
 
-// Search removes an {{.Name}} from the DB
+// Search {{.Name}} from the DB
 func (r *Repository{{.Model}}sCRUD) Search(q string, page int, size int) ([]models.{{.Model}}, int, error) {
 	var err error
-	var num int
+	var num int64
 	{{.Name}}s := []models.{{.Model}}{}
 	done := make(chan bool)
 	go func(ch chan<- bool) {
 		defer close(ch)
 		result := r.db.Debug().Model(&models.{{.Model}}{}).Where("key LIKE ?","%"+q+"%")
         result.Count(&num)
-        err = result.Limit(strconv.Itoa(size)).Offset(strconv.Itoa((page - 1) * size)).Order("-updated_at").Scan(&{{.Name}}s).Error
+        err = result.Limit(size).Offset((page - 1) * size).Order("-updated_at").Scan(&{{.Name}}s).Error
 		if err != nil {
 			ch <- false
 			return
@@ -142,9 +141,9 @@ func (r *Repository{{.Model}}sCRUD) Search(q string, page int, size int) ([]mode
 		ch <- true
 	}(done)
 	if channels.OK(done) {
-		return {{.Name}}s, num, nil
+		return {{.Name}}s, int(num), nil
 	}
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return []models.{{.Model}}{}, 0, errors.New("{{.Model}}s Not Found")
 	}
 	return []models.{{.Model}}{}, 0, err

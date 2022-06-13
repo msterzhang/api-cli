@@ -11,7 +11,7 @@ import (
 func init() {
 	db, err := sql.Open(config.DBDRIVER, config.DBDATAURL)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer db.Close()
 	_, err = db.Exec("CREATE DATABASE " + config.DBNAME)
@@ -35,7 +35,7 @@ func Load() {
     var err error
 	db := database.NewDb()
 	{{range .data}}
-	err = db.Debug().AutoMigrate(&models.{{.Model}}{},).Error
+	err = db.Debug().AutoMigrate(&models.{{.Model}}{},)
 	if err != nil {
 		log.Fatal(err)
 	}

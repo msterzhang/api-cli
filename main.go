@@ -5,104 +5,138 @@
 * @File    : main.go
 * @Software: GoLand
 * @Describe:
-*/
+ */
 package main
 
 import (
+	"api-cli/models"
 	"embed"
-	"fmt"
-	"github.com/urfave/cli"
 	"io/ioutil"
 	"log"
 	"os"
 	"regexp"
 	"strings"
 	"text/template"
+
+	"github.com/urfave/cli"
 )
 
 var p, _ = os.Getwd()
 var path = strings.Replace(p, "\\", "/", -1)
 
-type AutoCurdModel struct {
-	App   string
-	Name  string
-	Model string
-}
-
-func initMain() {
+// 初始化目录
+func initPath() {
 	var err error
 	err = os.RemoveAll(path + "/api")
+	if err != nil {
+		log.Fatal("清理原项目失败")
+	}
 	err = os.Mkdir("api", os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = os.Mkdir("auto", os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = os.Mkdir("config", os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = os.MkdirAll("api/controllers", os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = os.MkdirAll("api/database", os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = os.MkdirAll("api/models", os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = os.MkdirAll("api/repository/crud", os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = os.MkdirAll("api/security", os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = os.MkdirAll("api/utils/channels", os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = os.MkdirAll("api/utils/gpool", os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = os.Remove(path + "/api/models/Models.go")
 	if err != nil {
+		log.Fatal("删除文件失败")
 	}
 }
 
-
 //模板替换生成代码
-func AutoCreatFile(data AutoCurdModel, putPath string, outPath string) {
+func AutoCreatFile(data models.AutoCurdModel, putPath string, outPath string) {
 	b, err := f.ReadFile(putPath)
 	if err != nil {
-		fmt.Print(err)
+		log.Fatal(err)
 	}
 	tmpl, err := template.New("test").Parse(string(b))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	fileName := strings.Replace(path+outPath, "$", data.Model, -1)
 	err = os.Remove(fileName)
 	if err != nil {
-
+		log.Fatal(err)
 	}
 	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = tmpl.Execute(file, data)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
 //创建路由组代码
-func AutoCreatFileServer(data []AutoCurdModel, putPath string, outPath string) {
+func AutoCreatFileServer(data []models.AutoCurdModel, putPath string, outPath string) {
 	b, err := f.ReadFile(putPath)
 	if err != nil {
-		fmt.Print(err)
+		log.Fatal(err)
 	}
 	tmpl, err := template.New("foo").Parse(string(b))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	fileName := path + outPath
 	err = os.Remove(fileName)
 	if err != nil {
-
+		log.Fatal(err)
 	}
 	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = tmpl.Execute(file, map[string]interface{}{"data": data, "App": data[0].App})
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
-//
 func FindModelsList(name string, file string) {
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
-		fmt.Print(err)
+		log.Fatal(err)
 	}
 	var re = regexp.MustCompile(`type (.*?) struct`)
-	dataList := []AutoCurdModel{}
+	dataList := []models.AutoCurdModel{}
 	for _, match := range re.FindAllString(string(b), -1) {
 		v := re.FindStringSubmatch(match)[1]
-		data := AutoCurdModel{App: name, Model: v, Name: strings.ToLower(v)}
+		data := models.AutoCurdModel{App: name, Model: v, Name: strings.ToLower(v)}
 		AutoCreat(data)
 		dataList = append(dataList, data)
 	}
@@ -110,7 +144,7 @@ func FindModelsList(name string, file string) {
 }
 
 //生成主函数代码
-func AutoCreatMain(dataList []AutoCurdModel) {
+func AutoCreatMain(dataList []models.AutoCurdModel) {
 	//Server
 	AutoCreatFileServer(dataList, "templates/server.tpl", "/api/server.go")
 	//Load
@@ -118,7 +152,7 @@ func AutoCreatMain(dataList []AutoCurdModel) {
 }
 
 //创建文件组
-func AutoCreat(data AutoCurdModel) {
+func AutoCreat(data models.AutoCurdModel) {
 	//Main
 	AutoCreatFile(data, "templates/main.tpl", "/main.go")
 	//Database
@@ -138,25 +172,25 @@ func AutoCreat(data AutoCurdModel) {
 	AutoCreatFile(data, "templates/controllers_$s.tpl", "/api/controllers/controllers_$s.go")
 }
 
-func CopyConfig()  {
+func CopyConfig() {
 	content, err := f.ReadFile("templates/config.env")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	err = ioutil.WriteFile("config.env", content, 0644)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
-func CopyModels(file string)  {
+func CopyModels(file string) {
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	err = ioutil.WriteFile(path+"/api/models/Models.go", content, 0644)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
@@ -181,9 +215,9 @@ func main() {
 			name := c.String("n")
 			file := c.String("f")
 			if len(name) == 0 && len(file) == 0 {
-				fmt.Println("参数错误！")
+				log.Fatal("参数错误！")
 			} else {
-				initMain()
+				initPath()
 				FindModelsList(name, file)
 				CopyModels(file)
 				CopyConfig()
