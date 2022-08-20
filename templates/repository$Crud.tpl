@@ -5,7 +5,6 @@ import (
 	"{{.App}}/api/models"
 	"{{.App}}/api/utils/channels"
     "gorm.io/gorm"
-	"strconv"
 )
 
 // Repository{{.Model}}sCRUD is the struct for the {{.Model}} CRUD
@@ -131,7 +130,7 @@ func (r *Repository{{.Model}}sCRUD) Search(q string, page int, size int) ([]mode
 	done := make(chan bool)
 	go func(ch chan<- bool) {
 		defer close(ch)
-		result := r.db.Debug().Model(&models.{{.Model}}{}).Where("key LIKE ?","%"+q+"%")
+		result := r.db.Debug().Model(&models.{{.Model}}{}).Where("name LIKE ?","%"+q+"%")
         result.Count(&num)
         err = result.Limit(size).Offset((page - 1) * size).Order("-updated_at").Scan(&{{.Name}}s).Error
 		if err != nil {

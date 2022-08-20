@@ -14,7 +14,7 @@ func init() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	_, err = db.Exec("CREATE DATABASE " + config.DBNAME)
+	_, err = db.Exec("CREATE DATABASE " + config.DBNAME + " default character set utf8mb4 collate utf8mb4_general_ci")
 	if err != nil {
 		log.Println("数据库已存在!")
 		InitDatabase()

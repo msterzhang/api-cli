@@ -38,8 +38,9 @@ func init() {
 			os.Getenv("DB_NAME"),
 		) + "?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai"
 	}else {
-		DBDATAURL=fmt.Sprintf("%s:%s@tcp(mysql-server)/?charset=utf8mb4", os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD_Debug"), )
-		DBURL = fmt.Sprintf("%s:%s@tcp(mysql-server)/%s",
+		DBDATAURL = fmt.Sprintf("%s:%s@/?charset=utf8mb4", os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD_Release"))
+		//当数据库为docker，注意替换：fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)
+		DBURL = fmt.Sprintf("%s:%s@/%s",
 			os.Getenv("DB_USER"),
 			os.Getenv("DB_PASSWORD_Release"),
 			os.Getenv("DB_NAME"),

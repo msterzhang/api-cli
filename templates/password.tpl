@@ -3,7 +3,6 @@ package security
 import (
 	"encoding/base64"
 	"errors"
-	"log"
 )
 
 // Hash make a password hash
@@ -16,7 +15,7 @@ func Hash(password string) (string, error) {
 func VerifyPassword(hashedPassword, password string) error {
 	e, err := base64.StdEncoding.DecodeString(hashedPassword)
 	if err != nil {
-		log.Println("解析base64失败！")
+		return err
 	}
 	if string(e) != password {
 		return errors.New("密码错误！")

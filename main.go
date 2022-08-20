@@ -24,56 +24,31 @@ import (
 var p, _ = os.Getwd()
 var path = strings.Replace(p, "\\", "/", -1)
 
+func FileExist(path string) bool {
+	_, err := os.Lstat(path)
+	return !os.IsNotExist(err)
+}
+
 // 初始化目录
 func initPath() {
 	var err error
-	err = os.RemoveAll(path + "/api")
-	if err != nil {
-		log.Fatal("清理原项目失败")
-	}
-	err = os.Mkdir("api", os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = os.Mkdir("auto", os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = os.Mkdir("config", os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = os.MkdirAll("api/controllers", os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = os.MkdirAll("api/database", os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = os.MkdirAll("api/models", os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = os.MkdirAll("api/repository/crud", os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = os.MkdirAll("api/security", os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = os.MkdirAll("api/utils/channels", os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = os.MkdirAll("api/utils/gpool", os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = os.Remove(path + "/api/models/Models.go")
-	if err != nil {
-		log.Fatal("删除文件失败")
+	os.RemoveAll(path + "/api")
+	os.Mkdir("api", os.ModePerm)
+	os.Mkdir("auto", os.ModePerm)
+	os.Mkdir("config", os.ModePerm)
+	os.MkdirAll("api/controllers", os.ModePerm)
+	os.MkdirAll("api/database", os.ModePerm)
+	os.MkdirAll("api/models", os.ModePerm)
+	os.MkdirAll("api/repository/crud", os.ModePerm)
+	os.MkdirAll("api/security", os.ModePerm)
+	os.MkdirAll("api/utils/channels", os.ModePerm)
+	os.MkdirAll("api/utils/gpool", os.ModePerm)
+	modelFile := path + "/api/models/Models.go"
+	if FileExist(modelFile) {
+		err = os.Remove(modelFile)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -88,9 +63,11 @@ func AutoCreatFile(data models.AutoCurdModel, putPath string, outPath string) {
 		log.Fatal(err)
 	}
 	fileName := strings.Replace(path+outPath, "$", data.Model, -1)
-	err = os.Remove(fileName)
-	if err != nil {
-		log.Fatal(err)
+	if FileExist(fileName) {
+		err = os.Remove(fileName)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
@@ -113,9 +90,11 @@ func AutoCreatFileServer(data []models.AutoCurdModel, putPath string, outPath st
 		log.Fatal(err)
 	}
 	fileName := path + outPath
-	err = os.Remove(fileName)
-	if err != nil {
-		log.Fatal(err)
+	if FileExist(fileName) {
+		err = os.Remove(fileName)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
@@ -165,11 +144,11 @@ func AutoCreat(data models.AutoCurdModel) {
 	//Config
 	AutoCreatFile(data, "templates/config.tpl", "/config/config.go")
 	//Crud
-	AutoCreatFile(data, "templates/repository_$_crud.tpl", "/api/repository/crud/repository_$_crud.go")
+	AutoCreatFile(data, "templates/repository$Crud.tpl", "/api/repository/crud/repository$Crud.go")
 	//Repository
-	AutoCreatFile(data, "templates/repository_$s.tpl", "/api/repository/repository_$s.go")
+	AutoCreatFile(data, "templates/repository$s.tpl", "/api/repository/repository$s.go")
 	//Controllers
-	AutoCreatFile(data, "templates/controllers_$s.tpl", "/api/controllers/controllers_$s.go")
+	AutoCreatFile(data, "templates/controller$s.tpl", "/api/controllers/controller$s.go")
 }
 
 func CopyConfig() {
