@@ -44,9 +44,13 @@ func (r *Repository{{.Model}}sCRUD) FindAll(page int,size int) ([]models.{{.Mode
 	done := make(chan bool)
 	go func(ch chan<- bool) {
 		defer close(ch)
-		result := r.db.Debug().Model(&models.{{.Model}}{}).Find(&{{.Name}}s)
-		result.Count(&num)
-        err = result.Limit(size).Offset((page - 1) * size).Order("-ID").Scan(&{{.Name}}s).Error
+		result := r.db.Debug().Model(&models.{{.Model}}{})
+		err = result.Count(&num).Error
+		if err != nil {
+			ch <- false
+			return
+		}
+        err = result.Limit(size).Offset((page - 1) * size).Order("-ID").Find(&{{.Name}}s).Error
 		if err != nil {
 			ch <- false
 			return
